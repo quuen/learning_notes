@@ -5,7 +5,9 @@
 * `/modules/planning/navi_planning.cc`
 
   >`FLAGS_publish_estop`在`/modules/planning/common/planning_gflags.cc`默认设置是`false`
+  >
   >**代码为**：`DEFINE_bool(publish_estop, false, "publish estop decision in planning");`
+  >
   >**这样会在规划不成功的时候生成`estop`（紧急刹车）指令**
 
 
@@ -65,3 +67,42 @@
 
 ***
 
+* `/modules/map/relative_map/navigation_lane.cc`
+
+  * 因为相对地图是由**参考线+感知**得到，由于没有感知的车道线，因此为了在**参考线**作用结束后，**感知**部分不起作用，将代码暂时修改，后面应该有**更好的策略**
+
+    ```c++
+      //ConvertLaneMarkerToPath()该函数通过感知得到的车道标记生成navigation path
+      const double current_speed =
+          VehicleStateProvider::instance()->vehicle_state().linear_velocity();
+      double path_range = current_speed * FLAGS_ratio_navigation_lane_len_to_speed;
+      if (path_range <= FLAGS_min_len_for_navigation_lane) {
+        path_range = FLAGS_min_len_for_navigation_lane;
+      } else {
+        path_range = FLAGS_max_len_for_navigation_lane;
+      }
+      //加了 path_range = -3; 不让感知部分起作用
+      const double unit_z = 1.0;
+      const double start_s = -2.0;
+      double accumulated_s = start_s;
+      for (double z = start_s; z <= path_range; z += unit_z) {
+          //...
+      }
+    ```
+
+    
+
+  * 如果不修改，导航模式下，一般在启动模块并且没有发送参考线的情况下，在`dreamview`上观察会生成两条笔直的白色车道线，就是由于感知会按照以下规则向前延伸生成，生成的长度参考`/modules/map/relative_map/commmon/relative_map_gflags.cc`中
+
+    ```c++
+    DEFINE_double(min_len_for_navigation_lane, 150.0,
+                  "min generated navigation lane length");
+    
+    DEFINE_double(max_len_for_navigation_lane, 250.0,
+                  "max generated navigation lane length");
+    
+    DEFINE_double(ratio_navigation_lane_len_to_speed, 8.0,
+                  "navigation lane length to adv speed ratio");
+    ```
+
+    
