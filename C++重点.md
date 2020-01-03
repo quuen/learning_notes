@@ -229,9 +229,9 @@ C/C++的内容又多又杂，常常看到有人罗列相关书单，觉得毫无
 26. 内存区域分布？
      C++中内存大致分为：栈区、堆区、自由存储区、全局/静态存储区和常量存储区。
 
-     ![img](assets/内存图.jpg)
+     ![img](images/内存图.jpg)
 
-     ![img](assets/20180821165919747.png) 
+     ![img](images/20180821165919747.png) 
 
 27. 自由存储区是否等价于堆区？
      > 参考：[C++ 自由存储区是否等价于堆？](https://www.cnblogs.com/QG-whz/p/5060894.html)
@@ -260,12 +260,20 @@ C/C++的内容又多又杂，常常看到有人罗列相关书单，觉得毫无
 
      - 函数参数和模板参数不能修饰为auto
 
-     - 使用auto关键字推导类型无法推导出引用类型和const类型，除非显示声明如`auto &`和`onst auto`
+     - 使用auto关键字推导类型无法推导出引用类型和const类型，除非显示声明如`auto &`和`const auto`
 
+     - 想要拷贝元素`for(auto x:range)` 
+
+     - 想要修改元素`for(auto& x:range)`
+
+     - 想要只读元素`for(const auto& x:range)`
+    
+     - `for(const auto x : range)` 我想不到任何应该使用它的场景。你使用了auto代表你要拷贝元素，但是又加上const来代表不要修改拷贝出来的元素，那么更好的使用是`const auto&`，因为这样可以避免拷贝开销，并且不会改变元素。
+    
      - 对于数组，auto推导为指针类型，如果用`auto &`推导，可以推导出数组
-
+    
      - 如果作为函数返回值必须加`decltype`，如
-
+    
        ```cpp
        auto Add(int a, int b) -> decltype(a + b) {
            return a + b;
