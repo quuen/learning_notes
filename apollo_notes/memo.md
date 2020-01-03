@@ -1,8 +1,15 @@
 ### 导航模式下到录制轨迹终点Planning停不下来
 
 ***
+#### 遇到问题
 
-* `/modules/planning/navi_planning.cc`
+1. apollo默认定位数据好像是不会丢失的，每次planning获取的定位都是队列中维护的最新的数据
+   但是我们的GPS信号丢失，用的一直是丢失时的（队列中最新的）那次位置进行规划，更改之后如果出现这样的情况，就停止规划。
+2. 之前停止规划时会一直执行规划前最后一次的控制指令，更改之后停止规划就紧急停车。
+***
+
+#### 修改部分
+* /modules/planning/navi_planning.cc`
 
   >`FLAGS_publish_estop`在`/modules/planning/common/planning_gflags.cc`默认设置是`false`
   >
@@ -105,4 +112,23 @@
                   "navigation lane length to adv speed ratio");
     ```
 
+***
+
+### 使用路由还是参考线
+
+* 路由是在标准导航模式下，其中需要接入高精度地图搜索指定路径
+
+* 导航模式下，截取参考线发布到话题`/apollo/navigation`
+  * 修改`/modules/tools/navigator/navigator.py`文件，该文件提供话题输入给相对地图模块
+  * 目前思路如下：
+    1. 录制可能行驶路线的轨迹
     
+    2. [输入目的地点坐标](../images/cut-off-reference_line/navigator_routing.py)，匹配轨迹点上最近的点并截取作为发送参考线的终点
+    
+       **Usage:**`python navigator_routing.py [collection route] [ENU_X] [ENU_Y]`
+    
+    3. 可以把截取后的参考线可视化一下 
+  
+  ![参考线截取](../images/cut-off-reference_line/-305_185.png)
+  
+  ![参考线截取](../images/cut-off-reference_line/-320_249.png)
